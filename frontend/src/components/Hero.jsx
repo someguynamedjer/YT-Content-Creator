@@ -1,9 +1,36 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from './ui/button';
-import { ArrowRight, Play, Users, TrendingUp, DollarSign } from 'lucide-react';
-import { stats } from '../data/mock';
+import { ArrowRight, Play, Users, TrendingUp, DollarSign, Loader2 } from 'lucide-react';
+import { api, handleApiError } from '../services/api';
 
 const Hero = () => {
+  const [stats, setStats] = useState([]);
+  const [statsLoading, setStatsLoading] = useState(true);
+  
+  // Fetch stats from API
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        setStatsLoading(true);
+        const data = await api.getStats();
+        setStats(data);
+      } catch (err) {
+        console.error('Error loading stats:', err);
+        // Use fallback stats if API fails
+        setStats([
+          { number: "150+", label: "YouTube Channels Helped" },
+          { number: "2M+", label: "Words Written" },
+          { number: "45%", label: "Average Engagement Increase" },
+          { number: "$250K+", label: "Revenue Generated for Clients" }
+        ]);
+      } finally {
+        setStatsLoading(false);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
   const scrollToSection = (href) => {
     const element = document.querySelector(href);
     if (element) {
@@ -71,18 +98,31 @@ const Hero = () => {
 
           {/* Right Column - Stats */}
           <div className="lg:pl-8">
-            <div className="grid grid-cols-2 gap-6">
-              {stats.map((stat, index) => (
-                <div key={index} className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-shadow duration-300">
-                  <div className="text-3xl lg:text-4xl font-bold text-gray-900 mb-2">
-                    {stat.number}
+            {statsLoading ? (
+              <div className="grid grid-cols-2 gap-6">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+                    <div className="animate-pulse">
+                      <div className="h-8 bg-gray-200 rounded mb-2"></div>
+                      <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                    </div>
                   </div>
-                  <div className="text-gray-600 font-medium">
-                    {stat.label}
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-6">
+                {stats.map((stat, index) => (
+                  <div key={index} className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-shadow duration-300">
+                    <div className="text-3xl lg:text-4xl font-bold text-gray-900 mb-2">
+                      {stat.number}
+                    </div>
+                    <div className="text-gray-600 font-medium">
+                      {stat.label}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
             
             {/* Testimonial Preview */}
             <div className="mt-8 bg-white rounded-2xl p-6 shadow-lg border border-gray-100">

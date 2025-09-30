@@ -5,8 +5,9 @@ import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
 import { Badge } from './ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { Mail, MessageCircle, Calendar, CheckCircle, Send } from 'lucide-react';
+import { Mail, MessageCircle, Calendar, CheckCircle, Send, Loader2 } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
+import { api, handleApiError } from '../services/api';
 
 const Contact = () => {
   const { toast } = useToast();
@@ -40,12 +41,27 @@ const Contact = () => {
     e.preventDefault();
     setIsSubmitting(true);
     
-    // Mock form submission
-    setTimeout(() => {
+    try {
+      // Prepare form data for API
+      const submitData = {
+        name: formData.name,
+        email: formData.email,
+        channel: formData.channel || null,
+        subscribers: formData.subscribers || null,
+        service: formData.service,
+        project: formData.project || null,
+        budget: formData.budget || null,
+        message: formData.message
+      };
+
+      const response = await api.submitContactForm(submitData);
+      
       toast({
         title: "Message Sent! 🎉",
         description: "I'll get back to you within 24 hours to discuss your project.",
       });
+      
+      // Reset form
       setFormData({
         name: '',
         email: '',
@@ -56,8 +72,17 @@ const Contact = () => {
         budget: '',
         message: ''
       });
+      
+    } catch (err) {
+      const errorMessage = handleApiError(err);
+      toast({
+        title: "Error Sending Message",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
       setIsSubmitting(false);
-    }, 1000);
+    }
   };
 
   return (
@@ -106,6 +131,7 @@ const Contact = () => {
                         onChange={handleInputChange}
                         placeholder="John Doe"
                         required
+                        disabled={isSubmitting}
                         className="w-full"
                       />
                     </div>
@@ -122,6 +148,7 @@ const Contact = () => {
                         onChange={handleInputChange}
                         placeholder="john@example.com"
                         required
+                        disabled={isSubmitting}
                         className="w-full"
                       />
                     </div>
@@ -139,6 +166,7 @@ const Contact = () => {
                         value={formData.channel}
                         onChange={handleInputChange}
                         placeholder="My Awesome Channel"
+                        disabled={isSubmitting}
                         className="w-full"
                       />
                     </div>
@@ -147,7 +175,7 @@ const Contact = () => {
                       <label htmlFor="subscribers" className="block text-sm font-semibold text-gray-900 mb-2">
                         Subscriber Count
                       </label>
-                      <Select onValueChange={(value) => handleSelectChange(value, 'subscribers')}>
+                      <Select disabled={isSubmitting} onValueChange={(value) => handleSelectChange(value, 'subscribers')} value={formData.subscribers}>
                         <SelectTrigger>
                           <SelectValue placeholder="Select range" />
                         </SelectTrigger>
@@ -168,7 +196,7 @@ const Contact = () => {
                       <label htmlFor="service" className="block text-sm font-semibold text-gray-900 mb-2">
                         Service Interest *
                       </label>
-                      <Select onValueChange={(value) => handleSelectChange(value, 'service')} required>
+                      <Select disabled={isSubmitting} onValueChange={(value) => handleSelectChange(value, 'service')} value={formData.service} required>
                         <SelectTrigger>
                           <SelectValue placeholder="Select service" />
                         </SelectTrigger>
@@ -188,7 +216,7 @@ const Contact = () => {
                       <label htmlFor="budget" className="block text-sm font-semibold text-gray-900 mb-2">
                         Project Budget
                       </label>
-                      <Select onValueChange={(value) => handleSelectChange(value, 'budget')}>
+                      <Select disabled={isSubmitting} onValueChange={(value) => handleSelectChange(value, 'budget')} value={formData.budget}>
                         <SelectTrigger>
                           <SelectValue placeholder="Select budget" />
                         </SelectTrigger>
@@ -207,7 +235,7 @@ const Contact = () => {
                     <label htmlFor="project" className="block text-sm font-semibold text-gray-900 mb-2">
                       Project Timeline
                     </label>
-                    <Select onValueChange={(value) => handleSelectChange(value, 'project')}>
+                    <Select disabled={isSubmitting} onValueChange={(value) => handleSelectChange(value, 'project')} value={formData.project}>
                       <SelectTrigger>
                         <SelectValue placeholder="When do you need this?" />
                       </SelectTrigger>
@@ -233,6 +261,7 @@ const Contact = () => {
                       placeholder="Tell me about your channel, your goals, and what specific help you're looking for. The more details, the better I can customize a solution for you."
                       rows={6}
                       required
+                      disabled={isSubmitting}
                       className="w-full"
                     />
                   </div>
@@ -243,7 +272,10 @@ const Contact = () => {
                     className="w-full bg-gray-900 hover:bg-gray-800 text-white py-3 rounded-lg font-semibold transition-all duration-200 flex items-center justify-center space-x-2"
                   >
                     {isSubmitting ? (
-                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                      <>
+                        <Loader2 size={18} className="animate-spin" />
+                        <span>Sending...</span>
+                      </>
                     ) : (
                       <>
                         <Send size={18} />
